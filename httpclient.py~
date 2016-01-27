@@ -53,7 +53,7 @@ class HTTPClient(object):
         header = "%s %s HTTP/1.1\r\n" %(method, path) \
                  +"Host: %s\r\n" %(self.host) \
                  +"Connection: Keep-Alive\r\n"
-        #extra header lines for POST
+
         if data:
             content = urllib.urlencode(data)
             header += "Content-Length: %d\r\n" %(len(content)) \
