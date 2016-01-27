@@ -17,3 +17,6 @@ examples thus some of the code is Copyright © 2001-2013 Python
 Software Foundation; All Rights Reserved under the PSF license (GPL
 compatible) http://docs.python.org/2/library/socketserver.html
 
+sources referenced:
+* http://stackoverflow.com/questions/9530950/parsing-hostname-and-port-from-string-or-url
+* https://docs.python.org/2/library/re.html
