@@ -35,11 +35,18 @@ class HTTPRequest(object):
 class HTTPClient(object):
     def get_host_port(self,url):
         #reference http://stackoverflow.com/questions/9530950/parsing-hostname-and-port-from-string-or-url
-        parsex = '(?:http.*://)?(?P<host>[^:/ ]+).?(?P<port>[0-9]*).*?(?P<path>[^?#]*)'
+        parsex = '(?:http.*://)?(?P<host>[^:/ ]+).?(?P<port>[0-9]*).*?(?P<path>[^?#]*)(?P<extras>\?([^#]*))?'
         match = re.search(parsex, url)
         self.host = match.group('host')
-        self.port = int(match.group('port'))
+        print "host: ", self.host
+        self.port = match.group('port')
+        print "port: ", self.port
         self.path = match.group('path')
+        extras = match.group('extras')
+        if self.path:
+            self.path = "/" + self.path
+        if extras:
+            self.path += extras
         if not self.port:
             self.port = 80
 
@@ -47,10 +54,11 @@ class HTTPClient(object):
         # create an INET, STREAMing socket
         self.get_host_port(url)
         soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        soc.connect((self.host, self.port))
+        soc.connect((self.host, int(self.port)))
         return soc
 
     def make_headers(self, method, path, data=None):
+        print method, path
         header = "%s %s HTTP/1.1\r\n" %(method, path) \
                  +"Host: %s\r\n" %(self.host) \
                  +"Connection: Keep-Alive\r\n"
@@ -62,6 +70,7 @@ class HTTPClient(object):
         return header + "\n"
 
     def get_code(self, data):
+        print "GEEETTT CODE: ", int(data.split(' ')[1])
         return int(data.split(' ')[1])
 
     def get_body(self, data):
@@ -83,13 +92,17 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         code = 500
         body = ""
+        print "HEEEREREEEE? ", url
         connection = self.connect(url)
         req = self.make_headers('GET', self.path)
+        print "REQUEST: ", req
         connection.sendall(req)
 
         response = self.recvall(connection)
+        print response
         code = self.get_code(response)
         body = self.get_body(response)
+        print code, "BODY  ", body
 
         connection.close()
         return HTTPRequest(code, body)
@@ -105,7 +118,10 @@ class HTTPClient(object):
         spl = response.split(' ')[1]
         
         code = self.get_code(response)
+        print code
         body = self.get_body(response)
+
+        connection.close()
         return HTTPRequest(code, body)
 
     def command(self, url, command="GET", args=None):
