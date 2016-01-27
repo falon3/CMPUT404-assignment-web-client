@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# Copyright 2013 Abram Hindle
+# Copyright 2016 Abram Hindle, Falon Scheers
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ class HTTPRequest(object):
 
 class HTTPClient(object):
     def get_host_port(self,url):
-        #reference http://stackoverflow.com/questions/9530950/parsing-hostname-and-port-from-string-or-url
         parsex = '(?:http.*://)?(?P<host>[^:/ ]+).?(?P<port>[0-9]*).*?(?P<path>[^?#]*)(?P<extras>\?([^#]*))?'
         match = re.search(parsex, url)
         self.host = match.group('host')
