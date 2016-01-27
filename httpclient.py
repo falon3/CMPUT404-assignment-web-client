@@ -53,19 +53,19 @@ class HTTPClient(object):
     def make_headers(self, method, path, data=None):
         header = "%s %s HTTP/1.1\r\n" %(method, path) \
                  +"Host: %s\r\n" %(self.host) \
-                 +"Connection: Keep-Alive\r\n\n"
+                 +"Connection: Keep-Alive\r\n"
         #extra header lines for POST
         if data:
             content = urllib.urlencode(data)
             header += "Content-Length: %d\r\n" %(len(content)) \
                       +"\r\n" + content + "\r\n"
-        return header
+        return header + "\n"
 
     def get_code(self, data):
         return int(data.split(' ')[1])
 
     def get_body(self, data):
-        return data.split("\r\n",1)[1]
+        return data.split("\r\n\r\n",1)[1]
   
 
     # read everything from the socket
@@ -85,7 +85,6 @@ class HTTPClient(object):
         body = ""
         connection = self.connect(url)
         req = self.make_headers('GET', self.path)
-        print(req, "\n\n\n")
         connection.sendall(req)
 
         response = self.recvall(connection)
@@ -99,13 +98,14 @@ class HTTPClient(object):
         code = 500
         body = ""
         connection = self.connect(url)
-        req = self.make_headers('POST', self.path)
+        req = self.make_headers('POST', self.path, args)
 
         connection.sendall(req)
         response = self.recvall(connection)
+        spl = response.split(' ')[1]
+        
         code = self.get_code(response)
         body = self.get_body(response)
-
         return HTTPRequest(code, body)
 
     def command(self, url, command="GET", args=None):
