@@ -35,36 +35,37 @@ class HTTPRequest(object):
 class HTTPClient(object):
     def get_host_port(self,url):
         #reference http://stackoverflow.com/questions/9530950/parsing-hostname-and-port-from-string-or-url
-        parsex = '(?:http.*://)?(?P<host>[^:/ ]+).?(?P<port>[0-9]*).*'
+        parsex = '(?:http.*://)?(?P<host>[^:/ ]+).?(?P<port>[0-9]*).*?(?P<path>[^?#]*)'
         match = re.search(parsex, url)
         self.host = match.group('host')
-        self.port = match.group('port')
+        self.port = int(match.group('port'))
+        self.path = match.group('path')
         if not self.port:
             self.port = 80
 
-    def connect(self, host, port):
+    def connect(self, url):
         # create an INET, STREAMing socket
         self.get_host_port(url)
         soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        soc.connect((host, port))
+        soc.connect((self.host, self.port))
         return soc
 
     def make_headers(self, method, path, data=None):
         header = "%s %s HTTP/1.1\r\n" %(method, path) \
                  +"Host: %s\r\n" %(self.host) \
-                 +"Connection: Keep-Alive\r\n"
+                 +"Connection: Keep-Alive\r\n\n"
         #extra header lines for POST
         if data:
             content = urllib.urlencode(data)
             header += "Content-Length: %d\r\n" %(len(content)) \
-                      +"\r\n" + content
+                      +"\r\n" + content + "\r\n"
         return header
 
     def get_code(self, data):
-        self.code = data.split()[1]
+        return int(data.split(' ')[1])
 
     def get_body(self, data):
-        self.body = data.split("\r\n",1)[1]
+        return data.split("\r\n",1)[1]
   
 
     # read everything from the socket
@@ -82,11 +83,29 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         code = 500
         body = ""
+        connection = self.connect(url)
+        req = self.make_headers('GET', self.path)
+        print(req, "\n\n\n")
+        connection.sendall(req)
+
+        response = self.recvall(connection)
+        code = self.get_code(response)
+        body = self.get_body(response)
+
+        connection.close()
         return HTTPRequest(code, body)
 
     def POST(self, url, args=None):
         code = 500
         body = ""
+        connection = self.connect(url)
+        req = self.make_headers('POST', self.path)
+
+        connection.sendall(req)
+        response = self.recvall(connection)
+        code = self.get_code(response)
+        body = self.get_body(response)
+
         return HTTPRequest(code, body)
 
     def command(self, url, command="GET", args=None):
